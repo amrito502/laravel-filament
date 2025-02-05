@@ -10,6 +10,7 @@ use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Checkbox;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TagsInput;
@@ -19,11 +20,13 @@ use Filament\Tables\Columns\ImageColumn;
 use Filament\Forms\Components\FileUpload;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Components\ColorPicker;
+use Filament\Forms\Components\CheckboxList;
+use Filament\Tables\Columns\CheckboxColumn;
 use Filament\Forms\Components\MarkdownEditor;
 use App\Filament\Resources\PostResource\Pages;
+use Symfony\Contracts\Service\Attribute\Required;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\PostResource\RelationManagers;
-use Filament\Tables\Columns\CheckboxColumn;
 
 class PostResource extends Resource
 {
@@ -39,15 +42,34 @@ class PostResource extends Resource
                 TextInput::make('slug')->rules(['min:3','max:100'])->required(),
                 // TextInput::make('slug')->numeric()->rules(['min:3','max:10'])->required(),
 
+                // Select::make('category_id')
+                //     ->label('Category Name')
+                //     ->options(Category::all()->pluck('name','id')),
+
                 Select::make('category_id')
                     ->label('Category Name')
-                    ->options(Category::all()->pluck('name','id')),
+                    ->relationship('category','name')
+                    ->searchable()
+                    ->Required(),
 
                 FileUpload::make('thumbnail')->disk('public')->directory('thumbnails'),
 
                 ColorPicker::make('color')->required(),
                 MarkdownEditor::make('content')->nullable()->columnSpan('full'),
                 TagsInput::make('tags')->nullable(),
+                // Section::make('Authors')->schema([
+                //     Select::make('authors')
+                //         ->label('Co Authors')
+                //         ->multiple()
+                //         ->relationship('authors','name'),
+                // ]),
+
+                Section::make('Authors')->schema([
+                    CheckboxList::make('authors')
+                        ->label('Co Authors')
+                        ->searchable()
+                        ->relationship('authors','name'),
+                ]),
                 Checkbox::make('published')->required(),
 
             ])->columns(
@@ -89,6 +111,7 @@ class PostResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
